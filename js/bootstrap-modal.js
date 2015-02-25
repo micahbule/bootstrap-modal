@@ -24,15 +24,15 @@
 	/* MODAL CLASS DEFINITION
 	* ====================== */
 
-	var Modal = function (element, options) {
-		this.init(element, options);
+	var Modal = function (element, options, _relatedTarget) {
+		this.init(element, options, _relatedTarget);
 	};
 
 	Modal.prototype = {
 
 		constructor: Modal,
 
-		init: function (element, options) {
+		init: function (element, options, _relatedTarget) {
 			var that = this;
 
 			this.options = options;
@@ -51,15 +51,15 @@
 			manager = manager.appendModal ?
 				manager : $(manager).modalmanager().data('modalmanager');
 
-			manager.appendModal(this);
+			manager.appendModal(this, _relatedTarget);
 		},
 
 		toggle: function () {
 			return this[!this.isShown ? 'show' : 'hide']();
 		},
 
-		show: function () {
-			var e = $.Event('show');
+		show: function (_relatedTarget) {
+			var e = $.Event('show', { relatedTarget: _relatedTarget });
 
 			if (this.isShown) return;
 
@@ -154,25 +154,24 @@
 			if (this.isShown && this.options.consumeTab) {
 				this.$element.on('keydown.tabindex.modal', '[data-tabindex]', function (e) {
 			    	if (e.keyCode && e.keyCode == 9){
-						var elements = [],
-							tabindex = Number($(this).data('tabindex'));
+						var $next = $(this),
+							$rollover = $(this);
 
-						that.$element.find('[data-tabindex]:enabled:visible:not([readonly])').each(function (ev) {
-							elements.push(Number($(this).data('tabindex')));
-						});
-						elements.sort(function(a,b){return a-b});
-						
-						var arrayPos = $.inArray(tabindex, elements);
-						if (!e.shiftKey){
-						 		arrayPos < elements.length-1 ?
-									that.$element.find('[data-tabindex='+elements[arrayPos+1]+']').focus() :
-									that.$element.find('[data-tabindex='+elements[0]+']').focus();
+						that.$element.find('[data-tabindex]:enabled:not([readonly])').each(function (e) {
+							if (!e.shiftKey){
+						 		$next = $next.data('tabindex') < $(this).data('tabindex') ?
+									$next = $(this) :
+									$rollover = $(this);
 							} else {
-								arrayPos == 0 ?
-									that.$element.find('[data-tabindex='+elements[elements.length-1]+']').focus() :
-									that.$element.find('[data-tabindex='+elements[arrayPos-1]+']').focus();
+								$next = $next.data('tabindex') > $(this).data('tabindex') ?
+									$next = $(this) :
+									$rollover = $(this);
 							}
-						
+						});
+
+						$next[0] !== $(this)[0] ?
+							$next.focus() : $rollover.focus();
+
 						e.preventDefault();
 					}
 				});
@@ -328,9 +327,9 @@
 				data = $this.data('modal'),
 				options = $.extend({}, $.fn.modal.defaults, $this.data(), typeof option == 'object' && option);
 
-			if (!data) $this.data('modal', (data = new Modal(this, options)));
+			if (!data) $this.data('modal', (data = new Modal(this, options, args)));
 			if (typeof option == 'string') data[option].apply(data, [].concat(args));
-			else if (options.show) data.show()
+			else if (options.show) data.show(args)
 		})
 	};
 
@@ -368,7 +367,7 @@
 
 			e.preventDefault();
 			$target
-				.modal(option)
+				.modal(option, this)
 				.one('hide', function () {
 					$this.focus();
 				})

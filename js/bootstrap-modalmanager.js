@@ -56,14 +56,14 @@
 			$(element).modal($.extend({ manager: this }, options));
 		},
 
-		appendModal: function (modal) {
+		appendModal: function (modal, _relatedTarget) {
 			this.stack.push(modal);
 
 			var that = this;
 
 			modal.$element.on('show.modalmanager', targetIsSelf(function (e) {
 
-				var showModal = function(){
+				var showModal = function(relatedTarget) {
 					modal.isShown = true;
 
 					var transition = $.support.transition && modal.$element.hasClass('fade');
@@ -79,7 +79,7 @@
 					modal.$element.appendTo(modal.$container);
 
 					that.backdrop(modal, function () {
-						modal.$element.show();
+						modal.$element.show(_relatedTarget);
 
 						if (transition) {       
 							//modal.$element[0].style.display = 'run-in';       
@@ -95,7 +95,9 @@
 
 						var complete = function () {
 							that.setFocus();
-							modal.$element.trigger('shown');
+							var e = $.Event('shown', { relatedTarget: relatedTarget });
+
+							modal.$element.trigger(e);
 						};
 
 						transition ?
@@ -105,8 +107,8 @@
 				};
 
 				modal.options.replace ?
-					that.replace(showModal) :
-					showModal();
+					that.replace(_relatedTarget, showModal) :
+					showModal(_relatedTarget);
 			}));
 
 			modal.$element.on('hidden.modalmanager', targetIsSelf(function (e) {
@@ -186,7 +188,7 @@
 			}
 		},
 
-		replace: function (callback) {
+		replace: function ( _relatedTarget, callback) {
 			var topModal;
 
 			for (var i = 0; i < this.stack.length; i++){
@@ -202,7 +204,7 @@
 
 				topModal.hide();
 			} else if (callback) {
-				callback();
+				callback(_relatedTarget);
 			}
 		},
 
