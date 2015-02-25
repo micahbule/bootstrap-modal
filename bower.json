@@ -6,6 +6,10 @@
   "dependencies": {
     "bootstrap": "2.3.0"
   },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/micahbule/bootstrap-modal.git"
+  },
   "url": "https://github.com/micahbule/bootstrap-modal.git",
   "author": "Micah Andrew Bule",
   "license": {
